@@ -1,30 +1,29 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
 #include <math.h>
-#include <conio.h>
+#include "bge.h"
 
 int main(int argc, const char * argv[])
 {
+    printf("Enter level name:");
+    char fnm[100];
+    scanf("%s",fnm);
+    putchar(10);
     FILE *lvl;
-    lvl=fopen("D:/PRs/PR14/level.txt","r");
+    lvl=fopen(fnm,"r");
+    printf("Debug:\tFile Opened\n");
     char level[10][10];
     if(lvl==NULL){
         exit(EXIT_FAILURE);
     }else{
         //Opened file sucessfully
-        int f=0;
+	printf("Debug:\tFile Opening Successful\n");
         int i=0;
         char x;
         while(((x=fgetc(lvl))!=0)&&(i<100)){
-            level[(int)floor(i/10)][i%10]=x;
+            int j = (int) floor(i/10);
+	    level[j][i%10]=x;
             i++;
-        }
-        if(f<100){
-            printf("File too short\n");
-            printf("%s",argv[0]);
-            getchar();
-            exit(EXIT_FAILURE);
         }
     }
     char c;
@@ -37,28 +36,28 @@ int main(int argc, const char * argv[])
     int panx=0;
     int pany=0;
     int coins=0;
+    setup();
+    chclr(0x0f);
     goto menu;
-    init_keyboard();
 menu:
+    clscr();
+    wrtst("+--------------+",0,0);
+    wrtst("|  Castle Run  |",1,0);
+    wrtst("|  Alpha v0.0  |",2,0);
+    wrtst("+--------------+",3,0);
+    wrtst("|Action     Key|",4,0);
+    wrtst("|Play         p|",5,0);
+    wrtst("|Instructions i|",6,0);
+    wrtst("|Exit         x|",7,0);
+    wrtst("+--------------+",8,0);
+    update();
     while(1){
-        system("cls");
-        printf("+--------------+\n");
-        printf("|  Castle Run  |\n");
-        printf("|Prerelease 13 |\n");
-        printf("+--------------+\n");
-        printf("|Action     Key|\n");
-        printf("|Play         p|\n");
-        printf("|Instructions i|\n");
-        printf("|Exit         x|\n");
-        printf("+--------------+\n");
         c=getchar();
         switch(c){
                 case 'p':
-                system("cls");
                 goto resume;
                 break;
                 case 'i':
-                system("cls");
                 goto instructions;
                 break;
                 case 'x':
@@ -67,35 +66,47 @@ menu:
             default:
                 break;
         }
+	update();
     }
     goto resume;
 instructions:
+    clscr();
+    wrtst("+--------------+",0,0);
+    wrtst("|  Castle Run  |",1,0);
+    wrtst("| Instructions |",2,0);
+    wrtst("+--------------+",3,0);
+    wrtst("|Action    Keys|",4,0);
+    wrtst("|Move        w |",5,0);
+    wrtst("|           a d|",6,0);
+    wrtst("|            s |",7,0);
+    wrtst("|              |",8,0);
+    wrtst("|Pan         i |",9,0);
+    wrtst("|           j l|",10,0);
+    wrtst("|            k |",11,0);
+    wrtst("|              |",12,0);
+    wrtst("|Pause        p|",13,0);
+    wrtst("|Exit         x|",14,0);
+    wrtst("+--------------+",15,0);
+    wrtst("|Back         m|",16,0);
+    wrtst("+--------------+",17,0);
+    update();
     while(1){
-        printf("+--------------+\n");
-        printf("|  Castle Run  |\n");
-        printf("| Instructions |\n");
-        printf("+--------------+\n");
-        printf("|Action    Keys|\n");
-        printf("|Move        w |\n");
-        printf("|           a d|\n");
-        printf("|            s |\n");
-        printf("|              |\n");
-        printf("|Pan         i |\n");
-        printf("|           j l|\n");
-        printf("|            k |\n");
-        printf("|              |\n");
-        printf("|Pause        p|\n");
-        printf("|Exit         x|\n");
-        printf("+--------------+\n");
-        printf("|Back         m|\n");
-        printf("+--------------+\n");
+        //Oh, please don't delete me!
         c=getchar();
         if(c=='m'){
             goto menu;
         }
-        system("cls");
     }
 resume:
+    clscr();
+    //Draw the frame
+    wrtst("+--------+",0,0);
+    for(i=1;i<9;i++){
+        wrtst("|        |",i,0);
+    }
+    wrtst("+--------+",10,0);
+    wrtst("|Coins:  |",11,0);
+    wrtst("+--------+",12,0);
     while(1){
         for(i=0;i<9;i++){
             for(j=0;j<9;j++){
@@ -105,7 +116,7 @@ resume:
         s=x;
         t=y;
         if(kbhit()){
-            c=getch();
+            c=getchar();
             switch (c){
                 case 'a':
                     x--; //Move up
@@ -157,49 +168,46 @@ resume:
         }
         switch(game[y][x]){
             case 'W':
-            x=s;
-            y=t;
-            break;
+                x=s;
+                y=t;
+                break;
             case 'c':
-            coins++;
-            level[y][x]=' ';
-            break;
-                case 'x':
+                coins++;
+                level[y][x]=' ';
+                break;
+            case 'x':
+                x = 4;
+                y = 4;
                 goto die;
                 break;
         }
         game[y][x]='^'; //Add player to location
-        printf("+--------+\n");
         for(k=pany;k<(pany+8);k++){
-            putchar('|');
             for(l=panx;l<(panx+8);l++){
-                putchar(game[k][l]);//Print the character at the array
+                wrtch(game[k][l],k+1-pany,l+1-panx);//Print the character at the array
             }
-            putchar('|');
-            putchar(10);//Print next line
         }
-        printf("+--------+\n");
-        printf("|Coins:%i|\n", coins);
-        printf("+--------+\n");
-        sleep(0x1);//Wait one second
-        system("cls");//Clear the screen
+        wrtch((coins % 10) + '0', 11, 8);
+        update();
     }
     goto exit;
 die:
-    system("cls");
+    clscr();
+    wrtst("+-------------------+",0,0);
+    wrtst("|     Game over     |",1,0);
+    wrtst("+-------------------+",2,0);
+    wrtst("|Action          Key|",3,0);
+    wrtst("|Main Menu         m|",4,0);
+    wrtst("|Exit              x|",5,0);
+    wrtst("+-------------------+",6,0);
+    update();
+    
     while(1){
         coins=0;
-        printf("+-------------------+\n");
-        printf("|     Game over     |\n");
-        printf("+-------------------+\n");
-        printf("|Action          Key|\n");
-        printf("|Main Menu         m|\n");
-        printf("|Exit              x|\n");
-        printf("+-------------------+\n");
         c=getchar();
         switch(c){
             case 'r':
-                system("cls");
+                clscr();
                 goto resume;
                 break;
             case 'm':
@@ -211,19 +219,20 @@ die:
             default:
                 break;
         }
-        system("cls");
     }
 pause:
-    system("cls");
+    clscr();
+    wrtst("+-------------------+",0,0);
+    wrtst("|    Game Paused    |",1,0);
+    wrtst("+-------------------+",2,0);
+    wrtst("|Action          Key|",3,0);
+    wrtst("|Resume            r|",4,0);
+    wrtst("|Main Menu         m|",5,0);
+    wrtst("|Exit              x|",6,0);
+    wrtst("+-------------------+",7,0);
+    update();
+    
     while(1){
-        printf("+-------------------+\n");
-        printf("|    Game Paused    |\n");
-        printf("+-------------------+\n");
-        printf("|Action          Key|\n");
-        printf("|Resume            r|\n");
-        printf("|Main Menu         m|\n");
-        printf("|Exit              x|\n");
-        printf("+-------------------+\n");
         c=getchar();
         switch(c){
                 case 'm':
@@ -235,8 +244,8 @@ pause:
             default:
                 break;
         }
-        system("cls");
     }
 exit:
+    endpr();
     return 0;
 }
