@@ -1,7 +1,9 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <math.h>
-#include "bge.h"
+#include 	<stdio.h>
+#include	<stdlib.h>
+#include	<math.h>
+#include	"bge.h"
+#define		WIDTH	10
+#define 	HEIGHT	10
 
 int main(int argc, const char * argv[])
 {
@@ -12,7 +14,7 @@ int main(int argc, const char * argv[])
     FILE *lvl;
     lvl=fopen(fnm,"r");
     printf("Debug:\tFile Opened\n");
-    char level[10][10];
+    char level[WIDTH][HEIGHT];
     if(lvl==NULL){
         exit(EXIT_FAILURE);
     }else{
@@ -20,14 +22,14 @@ int main(int argc, const char * argv[])
 	printf("Debug:\tFile Opening Successful\n");
         int i=0;
         char x;
-        while(((x=fgetc(lvl))!=0)&&(i<100)){
-            int j = (int) floor(i/10);
-	    level[j][i%10]=x;
+        while(((x=fgetc(lvl))!=0)&&(i<(WIDTH * HEIGHT))){
+            int j = (int) floor(i/(WIDTH * HEIGHT));
+	    level[j][i%(WIDTH * HEIGHT)]=x;
             i++;
         }
     }
     char c;
-    char game[9][10]; //Game
+    char game[WIDTH][HEIGHT]; //Game
     int i, j, k, l; //For for loops
     //Initial Coordinates
     int x=4;
@@ -43,7 +45,7 @@ menu:
     clscr();
     wrtst("+--------------+",0,0);
     wrtst("|  Castle Run  |",1,0);
-    wrtst("|  Alpha v0.0  |",2,0);
+    wrtst("| Alpha v0.0.0 |",2,0);
     wrtst("+--------------+",3,0);
     wrtst("|Action     Key|",4,0);
     wrtst("|Play         p|",5,0);
@@ -108,8 +110,8 @@ resume:
     wrtst("|Coins:  |",11,0);
     wrtst("+--------+",12,0);
     while(1){
-        for(i=0;i<9;i++){
-            for(j=0;j<9;j++){
+        for(i=0;i<WIDTH;i++){
+            for(j=0;j<HEIGHT;j++){
                 game[i][j]=level[i][j];
             }
         }
@@ -147,12 +149,12 @@ resume:
                     }
                     break;
                 case 'k':
-                    if((pany+8)<9){
+                    if((pany+8)<WIDTH){
                         pany++;
                     }
                     break;
                 case 'l':
-                    if ((panx+8)<10){
+                    if ((panx+8)<HEIGHT){
                         panx++;
                     }
                     break;
@@ -160,10 +162,10 @@ resume:
                     break;
             }
         }
-        if(x>8||x<0){
+        if(x>HEIGHT||x<0){
             x=s;
         }
-        if(y>8||y<0){
+        if(y>WIDTH||y<0){
             y=t;
         }
         switch(game[y][x]){

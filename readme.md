@@ -20,10 +20,15 @@ Once upon a time, somewhere in the Universe, a sixth grader complained in his PE
 
 ## Release Notes
 
+### Alpha 0.0.1
+
+* Rewrote the code a little bit, which will allow me to implement bigger levels easily.
+* Fixed a minor bug.
+
 ### Alpha 0.0
 
-* Brought the game from the grave.
-* Improved UI
+* Brought the game back from the grave.
+* Improved UI.
 
 ## Plans for Future Versions
 
