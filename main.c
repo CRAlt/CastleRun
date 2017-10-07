@@ -1,39 +1,71 @@
 #include 	<stdio.h>
 #include	<stdlib.h>
 #include	<math.h>
+#include	<time.h>
 #include	"bge.h"
-#define		WIDTH	10
-#define 	HEIGHT	10
+#define		WIDTH	99
+#define 	HEIGHT	5
+#define		DIGITS	"0123456789ABCDEF"
+
+const int size = WIDTH * HEIGHT;
+
+char* hexInt(unsigned int n){
+	char* c = (char*) malloc(9);
+	int i;
+	for(i = 0; i < 8; i++){
+		*(c+i) = DIGITS[((n >> (4 * i)) % 16)];
+	}
+	*(c+9) = '\0';
+	putchar('\n');
+	return c;
+}
 
 int main(int argc, const char * argv[])
 {
+    FILE *logfile;  //Logfile
+    logfile=fopen("/tmp/cr.log","a");
+    srand(time(NULL));	//Seed
+    unsigned int sid = rand();	//Session ID
+    char* sids = hexInt(sid);
+    printf("%s\n", sids);
+    fprintf(logfile, "\n\n[%s]:\tStarting Program\n", sids);
+    fclose(logfile);
+    logfile=fopen("/tmp/cr.log","a");
+
+    printf("Unfinished!\n");
+
     printf("Enter level name:");
     char fnm[100];
     scanf("%s",fnm);
     putchar(10);
     FILE *lvl;
     lvl=fopen(fnm,"r");
-    printf("Debug:\tFile Opened\n");
-    char level[WIDTH][HEIGHT];
+    fprintf(logfile,"[%s]:\tFile Opened\n",sids);
     if(lvl==NULL){
+	fprintf(logfile,"[%s]:\tFile Opening Failed.\n",sids);
+        fclose(logfile);
         exit(EXIT_FAILURE);
-    }else{
-        //Opened file sucessfully
-	printf("Debug:\tFile Opening Successful\n");
-        int i=0;
-        char x;
-        while(((x=fgetc(lvl))!=0)&&(i<(WIDTH * HEIGHT))){
-            int j = (int) floor(i/(WIDTH * HEIGHT));
-	    level[j][i%(WIDTH * HEIGHT)]=x;
-            i++;
-        }
     }
+        //Opened file sucessfully
+    fprintf(logfile,"[%s]:\tFile Opening Successful.\n",sids);
+    char* level = (char *)malloc(size * sizeof(char));
+    fprintf(logfile,"[%s]:\tMalloc successful.\n",sids);
+    if (level == NULL) return -1;
+    int oi=0;
+    char ox;
+    fprintf(logfile,"[%s]:\tDeclaring variables, ready to dump file data into level.\n",sids);
+    while(((ox=fgetc(lvl))!=0)&&(oi<size)){
+        *(level+oi) = ox;
+        oi++;
+    }
+
+    fprintf(logfile,"[%s]:\tReady to run game\n",sids);
     char c;
-    char game[WIDTH][HEIGHT]; //Game
+    char* game = malloc(size * sizeof(char)); //Game
     int i, j, k, l; //For for loops
     //Initial Coordinates
-    int x=4;
-    int y=4;
+    int x=2;
+    int y=2;
     int s,t;
     int panx=0;
     int pany=0;
@@ -42,56 +74,114 @@ int main(int argc, const char * argv[])
     chclr(0x0f);
     goto menu;
 menu:
-    clscr();
-    wrtst("+--------------+",0,0);
-    wrtst("|  Castle Run  |",1,0);
-    wrtst("| Alpha v0.0.0 |",2,0);
-    wrtst("+--------------+",3,0);
-    wrtst("|Action     Key|",4,0);
-    wrtst("|Play         p|",5,0);
-    wrtst("|Instructions i|",6,0);
-    wrtst("|Exit         x|",7,0);
-    wrtst("+--------------+",8,0);
-    update();
+    fprintf(logfile,"[%s]:\tReady to print menu.\n",sids);
+    clear();
+    
+    //Draw frame
+    fprintf(logfile,"[%s]:\tScreen cleared\n",sids);
+    drwbx(0,0,64,32);
+    drwbx(0,16,64,16);
+
+    //Draw logo
+    int lx = 0, ly = 0;
+    FILE *logo;
+    logo = fopen("logo.txt","r");
+    for(i = 0; ((c = fgetc(logo)) != EOF); i++){
+	if(c == '\n'){
+		ly += 1;
+		lx = 0;
+	}else{
+		mvaddch(ly+4,lx+5,c);
+		lx += 1;
+	}
+    }
+
+    //Text
+    mvprintw(17,30,"Menu");
+
+    mvprintw(19,2,"Play");
+    mvprintw(20,2,"Help");
+    mvprintw(21,2,"Exit");
+    
+    //Version
+    mvprintw(30,1,"Alpha v0.0.2");
+    
+    //Set up menu
+    unsigned char item = 0x00;
+    unsigned char previtem = 0x00;
+
+    fprintf(logfile, "[%s]:\tItem is %i\n", sids, item);
+
+    refresh();
+    /*
+     *	0 = resume
+     *	1 = instructions
+     *	2 = exit
+     */
     while(1){
-        c=getchar();
-        switch(c){
-                case 'p':
-                goto resume;
-                break;
-                case 'i':
-                goto instructions;
-                break;
-                case 'x':
-                goto exit;
-                break;
-            default:
-                break;
-        }
-	update();
+        if(kbhit()){
+	    c = getchar();
+	    switch(c){
+		case '\033':
+		    switch(getLastKey()){
+			case 'A':
+			    item = ((item > 0) ? (item - 1) : item);
+			    fprintf(logfile, "[%s]:\tItem changed to %i\n", sids, item);
+			    break;
+			case 'B':
+			    item = ((item < 2) ? (item + 1) : item);
+			    fprintf(logfile, "[%s]:\tItem changed to %i\n", sids, item);
+			    break;
+			default:
+			    break;
+		    }
+		    break;
+		case '\r':
+		    switch(item){
+			case 0:
+    			    fclose(logfile);
+    			    logfile=fopen("/tmp/cr.log","a");
+			    goto resume;
+			    break;
+			case 1:
+			    goto instructions;
+			    break;
+			case 2:
+			    goto exit;
+			    break;
+		   }
+		   break;
+		case 'x':
+		   goto exit;
+		   break;
+	    }
+	}
+	mvaddch(19+item, 1, '*');
+	refresh();
+	mvaddch(19+previtem, 1, ' ');
+	previtem = item;
     }
     goto resume;
 instructions:
-    clscr();
-    wrtst("+--------------+",0,0);
-    wrtst("|  Castle Run  |",1,0);
-    wrtst("| Instructions |",2,0);
-    wrtst("+--------------+",3,0);
-    wrtst("|Action    Keys|",4,0);
-    wrtst("|Move        w |",5,0);
-    wrtst("|           a d|",6,0);
-    wrtst("|            s |",7,0);
-    wrtst("|              |",8,0);
-    wrtst("|Pan         i |",9,0);
-    wrtst("|           j l|",10,0);
-    wrtst("|            k |",11,0);
-    wrtst("|              |",12,0);
-    wrtst("|Pause        p|",13,0);
-    wrtst("|Exit         x|",14,0);
-    wrtst("+--------------+",15,0);
-    wrtst("|Back         m|",16,0);
-    wrtst("+--------------+",17,0);
-    update();
+    clear();
+    
+    drwbx(0,0,64,32);
+    drwbx(0,16,64,16);
+    
+    mvprintw(17,28,"Controls");
+
+    mvprintw(19,2,"Moving Around");
+    mvprintw(19,53,"Arrow Keys");
+    
+    mvprintw(20,2,"Pausing");
+    mvprintw(21,62,"p");
+        
+    mvprintw(21,2,"Exiting");
+    mvprintw(23,62,"x");
+    
+    mvprintw(30,1,"Press m to go back.");
+
+    refresh();
     while(1){
         //Oh, please don't delete me!
         c=getchar();
@@ -100,19 +190,24 @@ instructions:
         }
     }
 resume:
-    clscr();
+   clear();
+    
     //Draw the frame
-    wrtst("+--------+",0,0);
-    for(i=1;i<9;i++){
-        wrtst("|        |",i,0);
-    }
-    wrtst("+--------+",10,0);
-    wrtst("|Coins:  |",11,0);
-    wrtst("+--------+",12,0);
+    drwbx(0,0,64,32);
+    drwbx(0,0,64,3);
+    drwbx(0,2,49,21);
+    drwbx(48,2,16,21);
+    
+    //fprintf(logfile, "[%s]:\tReady to enter game loop\n",sids);
+
     while(1){
-        for(i=0;i<WIDTH;i++){
-            for(j=0;j<HEIGHT;j++){
-                game[i][j]=level[i][j];
+	
+	//fprintf(logfile,"[%s]:Starting loop(%i,%i)\n",sids,panx,pany);
+        fclose(logfile);
+        logfile=fopen("/tmp/cr.log","a");
+        for(i=0;i<HEIGHT;i++){
+            for(j=0;j<WIDTH;j++){
+                game[i*WIDTH+j]=level[i*WIDTH+j];
             }
         }
         s=x;
@@ -149,12 +244,12 @@ resume:
                     }
                     break;
                 case 'k':
-                    if((pany+8)<WIDTH){
+                    if((pany+19)<HEIGHT){
                         pany++;
                     }
                     break;
                 case 'l':
-                    if ((panx+8)<HEIGHT){
+                    if ((panx+47)<WIDTH){
                         panx++;
                     }
                     break;
@@ -162,20 +257,21 @@ resume:
                     break;
             }
         }
-        if(x>HEIGHT||x<0){
+	//fprintf(logfile,"[%s]:Finished handling controls\n",sids);
+        if(x>WIDTH||x<0){
             x=s;
         }
-        if(y>WIDTH||y<0){
+        if(y>HEIGHT||y<0){
             y=t;
         }
-        switch(game[y][x]){
+        switch(game[y*WIDTH+x]){
             case 'W':
                 x=s;
                 y=t;
                 break;
             case 'c':
                 coins++;
-                level[y][x]=' ';
+                level[y*WIDTH+x]=' ';
                 break;
             case 'x':
                 x = 4;
@@ -183,38 +279,33 @@ resume:
                 goto die;
                 break;
         }
-        game[y][x]='^'; //Add player to location
-        for(k=pany;k<(pany+8);k++){
-            for(l=panx;l<(panx+8);l++){
-                wrtch(game[k][l],k+1-pany,l+1-panx);//Print the character at the array
+        game[y*WIDTH+x]='j'; //Add player to location
+	for(k=pany;k<(pany+19);k++){
+            for(l=panx;l<(panx+47);l++){
+                if((k<HEIGHT)&&(l<WIDTH)){
+	    		mvaddch(k+3-pany,l+1-panx,game[k*WIDTH+l]);//Print the character at the array
+		}
             }
         }
-        wrtch((coins % 10) + '0', 11, 8);
-        update();
+        mvprintw(1, 54, "Coins: %i", (coins % 10));
+        refresh();
     }
     goto exit;
 die:
-    clscr();
-    wrtst("+-------------------+",0,0);
-    wrtst("|     Game over     |",1,0);
-    wrtst("+-------------------+",2,0);
-    wrtst("|Action          Key|",3,0);
-    wrtst("|Main Menu         m|",4,0);
-    wrtst("|Exit              x|",5,0);
-    wrtst("+-------------------+",6,0);
-    update();
+    drwbx(26,15,12,5);
+
+    mvprintw(16, 28, "You died");
+    mvprintw(18, 27, "Exit");
+    mvprintw(18, 36, "x");
+
+    refresh();
     
     while(1){
         coins=0;
+	
+
         c=getchar();
         switch(c){
-            case 'r':
-                clscr();
-                goto resume;
-                break;
-            case 'm':
-                goto menu;
-                break;
             case 'x':
                 goto exit;
                 break;
@@ -223,31 +314,65 @@ die:
         }
     }
 pause:
-    clscr();
-    wrtst("+-------------------+",0,0);
-    wrtst("|    Game Paused    |",1,0);
-    wrtst("+-------------------+",2,0);
-    wrtst("|Action          Key|",3,0);
-    wrtst("|Resume            r|",4,0);
-    wrtst("|Main Menu         m|",5,0);
-    wrtst("|Exit              x|",6,0);
-    wrtst("+-------------------+",7,0);
-    update();
-    
+    fprintf(logfile, "[%s]:Pause Menu initialized.\n", sids);
+    drwbx(27,12,10,8);
+    drwbx(27,14,10,6);
+
+    mvprintw(13,29,"Paused");
+    mvprintw(15,29,"Resume");
+    mvprintw(16,30,"Main");
+    mvprintw(17,30,"Exit");
+
+    item = 0;
+
+    int arrayOfLeftAsterisks[3] = {28, 29, 29};
+    int arrayOfRightAsterisks[3] = {35, 34, 34};
+   
+    refresh();
     while(1){
+	previtem = item;
         c=getchar();
         switch(c){
-                case 'm':
-                goto menu;
-                break;
-                case 'x':
-                goto exit;
-                break;
-            default:
-                break;
+		case '\033':
+			getchar();
+			switch(getchar()){
+				case 'A':
+					if(item > 0){
+						item--;
+					}
+					break;
+				case 'B':
+					if(item < 2){
+						item++;
+					}
+					break;
+				default:
+					break;
+			}
+			break;
+		case '\r':
+			switch(item){
+				case 0:
+					goto resume;
+				case 1:
+					goto menu;
+				case 2:
+					goto exit;
+			}
+		default:
+			break;
         }
+
+	mvaddch(15+previtem,arrayOfLeftAsterisks[previtem],' ');
+	mvaddch(15+previtem,arrayOfRightAsterisks[previtem],' ');
+	mvaddch(15+item,arrayOfLeftAsterisks[item],'*');
+	mvaddch(15+item,arrayOfRightAsterisks[item],'*');
+
+	fprintf(logfile,"[%s]:\tRefresh called.",sids);
+	refresh();
     }
 exit:
+    fclose(logfile);
     endpr();
     return 0;
 }

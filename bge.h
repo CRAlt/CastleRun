@@ -3,9 +3,11 @@
 #include	<unistd.h>
 #include	<fcntl.h>
 #include	<ncurses.h>
+#include	<string.h>
 
-char scrn[64][64];
 unsigned char color;
+
+char lastKey;
 
 int kbhit(void){
 	
@@ -28,6 +30,13 @@ int kbhit(void){
 	fcntl(STDIN_FILENO, F_SETFL, oldf);
 	
 	if(ch != EOF){
+		
+		if(ch == 033){
+			getchar();
+			char ch2 = getchar();
+			lastKey = ch2;
+		}
+
 		ungetc(ch, stdin); //Put character back in stream?
 		return 1;
 	}
@@ -38,47 +47,7 @@ int kbhit(void){
 void setup(void){
 	initscr();
 	start_color();
-	int i, j;
-	for(i=0; i<64; i++){
-		for(j=0; j<64; j++){
-			scrn[i][j] = ' ';
-		}
-	}
-}
-
-void update(void){
-	init_pair(1, (color % 16), ((color - (color % 16)) / 16));
-	attron(COLOR_PAIR(1));
-	int i,j;
-	for(i=0; i<64; i++){
-		for(j=0; j<64; j++){
-			char c = scrn[i][j];
-			mvaddch(i, j, c);
-		}
-	}
-	refresh();
-}
-
-void wrtch(char c, int i, int j){
-	scrn[i][j] = c;
-}
-
-void wrtst(const char *s, int i, int j){
-	int k;
-	for(k = 0; s[k]; k++){
-		if((j + k) < 64){
-			wrtch(s[k], i, (j + k));
-		}
-	}
-}
-
-void clscr(void){
-	int i, j;
-	for(i = 0; i < 64; i++){
-		for(j = 0; j < 64; j++){
-			wrtch(' ', i, j);
-		}
-	}
+	lastKey = EOF;
 }
 
 void chclr(unsigned char c){
@@ -89,4 +58,30 @@ void chclr(unsigned char c){
 void endpr(void){
 	attroff(COLOR_PAIR(1));
 	endwin();
+}
+
+char getLastKey(void){
+	return lastKey;
+}
+
+void drwbx(int x, int y, int l, int h){
+	int i, j;
+	
+	for(i = y; i < (y+h); i++){
+		//printf("Debug :\t%i\r\n",l);
+		char c[l+1];	//Contains horizontal slice of box.
+
+		for(j = 0; j < l; j++){
+			//printf("Debug:\t%i\r\n", j);
+			if((j == 0) || (j == (l-1))){
+				c[j] = (((i == y) || (i == (y+h-1))) ? '+' : '|');
+			}else{
+				c[j] = (((i == y) || (i == (y+h-1))) ? '-' : ' ');
+			}
+		}
+		c[l] = '\0';
+
+		//printf("Debug:\t%d\r\n\r\n", (int) strlen(c));
+		mvprintw(i, x, c);
+	}
 }
